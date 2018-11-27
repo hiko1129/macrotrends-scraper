@@ -9,6 +9,7 @@ import (
 )
 
 var _ = Describe("Scraper", func() {
+	// Use a real endpoint to verify that the web page has changed
 	Describe("#FetchPERHistoricalData", func() {
 		Context("when valid ticker symbol", func() {
 			It("expects no error", func() {

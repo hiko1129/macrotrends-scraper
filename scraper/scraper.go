@@ -89,7 +89,6 @@ func FetchPSRHistoricalData(tickerSymbol string, companyName string) ([]PSRHisto
 	}
 
 	return result, nil
-
 }
 
 // FetchPBRHistoricalData func

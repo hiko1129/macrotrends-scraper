@@ -10,16 +10,11 @@ import (
 	"github.com/PuerkitoBio/goquery"
 )
 
-// Scraper struct
-type Scraper struct{}
-
-// New func
-func New() (*Scraper, error) {
-	return &Scraper{}, nil
-}
-
-type datum interface {
-	p()
+type historicalDatum struct {
+	date       *time.Time
+	stockPrice float32
+	perShare   float32
+	ratio      float32
 }
 
 // PERHistoricalDatum struct
@@ -30,8 +25,6 @@ type PERHistoricalDatum struct {
 	PER        float32
 }
 
-func (p *PERHistoricalDatum) p() {}
-
 // PSRHistoricalDatum struct
 type PSRHistoricalDatum struct {
 	Date             *time.Time
@@ -39,8 +32,6 @@ type PSRHistoricalDatum struct {
 	TTMSalesPerShare float32
 	PSR              float32
 }
-
-func (p *PSRHistoricalDatum) p() {}
 
 // PBRHistoricalDatum struct
 type PBRHistoricalDatum struct {
@@ -50,8 +41,6 @@ type PBRHistoricalDatum struct {
 	PBR               float32
 }
 
-func (p *PBRHistoricalDatum) p() {}
-
 // PFCFRHistoricalDatum struct
 type PFCFRHistoricalDatum struct {
 	Date           *time.Time
@@ -60,30 +49,92 @@ type PFCFRHistoricalDatum struct {
 	PFCFR          float32
 }
 
-func (p *PFCFRHistoricalDatum) p() {}
-
-// GetPERHistoricalData func
-func (s *Scraper) GetPERHistoricalData(tickerSymbol string, companyName string) ([]PERHistoricalDatum, error) {
+// FetchPERHistoricalData func
+func FetchPERHistoricalData(tickerSymbol string, companyName string) ([]PERHistoricalDatum, error) {
 	url := fmt.Sprintf("https://www.macrotrends.net/stocks/charts/%v/%v/pe-ratio", tickerSymbol, companyName)
-	return s.getHistoricalData(url)
+	data, err := fetchHistoricalData(url)
+	result := []PERHistoricalDatum{}
+	if err != nil {
+		return result, err
+	}
+
+	for _, datum := range data {
+		result = append(result, PERHistoricalDatum{
+			Date:       datum.date,
+			StockPrice: datum.stockPrice,
+			TTMNetEPS:  datum.perShare,
+			PER:        datum.ratio,
+		})
+	}
+
+	return result, nil
 }
 
-// GetPSRHistoricalData func
-func (s *Scraper) GetPSRHistoricalData(tickerSymbol string, companyName string) ([]PSRHistoricalDatum, error) {
-	return []PSRHistoricalDatum{}, nil
+// FetchPSRHistoricalData func
+func FetchPSRHistoricalData(tickerSymbol string, companyName string) ([]PSRHistoricalDatum, error) {
+	url := fmt.Sprintf("https://www.macrotrends.net/stocks/charts/%v/%v/price-sales", tickerSymbol, companyName)
+	data, err := fetchHistoricalData(url)
+	result := []PSRHistoricalDatum{}
+	if err != nil {
+		return result, err
+	}
+
+	for _, datum := range data {
+		result = append(result, PSRHistoricalDatum{
+			Date:             datum.date,
+			StockPrice:       datum.stockPrice,
+			TTMSalesPerShare: datum.perShare,
+			PSR:              datum.ratio,
+		})
+	}
+
+	return result, nil
+
 }
 
-// GetPBRHistoricalData func
-func (s *Scraper) GetPBRHistoricalData(tickerSymbol string, companyName string) ([]PBRHistoricalDatum, error) {
-	return []PBRHistoricalDatum{}, nil
+// FetchPBRHistoricalData func
+func FetchPBRHistoricalData(tickerSymbol string, companyName string) ([]PBRHistoricalDatum, error) {
+	url := fmt.Sprintf("https://www.macrotrends.net/stocks/charts/%v/%v/price-book", tickerSymbol, companyName)
+	data, err := fetchHistoricalData(url)
+	result := []PBRHistoricalDatum{}
+	if err != nil {
+		return result, err
+	}
+
+	for _, datum := range data {
+		result = append(result, PBRHistoricalDatum{
+			Date:              datum.date,
+			StockPrice:        datum.stockPrice,
+			BookValuePerShare: datum.perShare,
+			PBR:               datum.ratio,
+		})
+	}
+
+	return result, nil
 }
 
-// GetPFCFRHistoricalData func
-func (s *Scraper) GetPFCFRHistoricalData(tickerSymbol string, companyName string) ([]PFCFRHistoricalDatum, error) {
-	return []PFCFRHistoricalDatum{}, nil
+// FetchPFCFRHistoricalData func
+func FetchPFCFRHistoricalData(tickerSymbol string, companyName string) ([]PFCFRHistoricalDatum, error) {
+	url := fmt.Sprintf("https://www.macrotrends.net/stocks/charts/%v/%v/price-fcf", tickerSymbol, companyName)
+	data, err := fetchHistoricalData(url)
+	result := []PFCFRHistoricalDatum{}
+	if err != nil {
+		return result, err
+	}
+
+	for _, datum := range data {
+		result = append(result, PFCFRHistoricalDatum{
+			Date:           datum.date,
+			StockPrice:     datum.stockPrice,
+			TTMFCFPerShare: datum.perShare,
+			PFCFR:          datum.ratio,
+		})
+	}
+
+	return result, nil
 }
 
-func (s *Scraper) getHistoricalData(url string) ([]PERHistoricalDatum, error) {
+func fetchHistoricalData(url string) ([]historicalDatum, error) {
 	res, err := http.Get(url)
 	if err != nil {
 		return nil, err
@@ -98,7 +149,7 @@ func (s *Scraper) getHistoricalData(url string) ([]PERHistoricalDatum, error) {
 		return nil, err
 	}
 
-	data := []PERHistoricalDatum{}
+	data := []historicalDatum{}
 	var errs []error
 	doc.Find("#style-1 tbody").Children().Each(func(i int, s *goquery.Selection) {
 		date, err := time.Parse("2006-01-02", s.Find("td:nth-child(1)").Text())
@@ -128,11 +179,11 @@ func (s *Scraper) getHistoricalData(url string) ([]PERHistoricalDatum, error) {
 			errs = append(errs, err)
 		}
 
-		data = append(data, PERHistoricalDatum{
-			Date:       &date,
-			StockPrice: float32(stockPrice),
-			TTMNetEPS:  float32(ttmNetEPS),
-			PER:        float32(per),
+		data = append(data, historicalDatum{
+			date:       &date,
+			stockPrice: float32(stockPrice),
+			perShare:   float32(ttmNetEPS),
+			ratio:      float32(per),
 		})
 	})
 	if len(errs) > 0 {
@@ -140,5 +191,4 @@ func (s *Scraper) getHistoricalData(url string) ([]PERHistoricalDatum, error) {
 	}
 
 	return data, nil
-
 }

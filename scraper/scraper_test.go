@@ -1,44 +1,47 @@
 package scraper_test
 
 import (
+	"time"
+
 	"github.com/hiko1129/macrotrends-scraper/scraper"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 )
 
 var _ = Describe("Scraper", func() {
-
-	var client *scraper.Scraper
-	BeforeEach(func() {
-		client, _ = scraper.New()
-	})
-
-	Describe("#GetPERHistoricalData", func() {
+	Describe("#FetchPERHistoricalData", func() {
 		It("expects no error", func() {
-			data, err := client.GetPERHistoricalData("FB", "facebook")
+			data, err := scraper.FetchPERHistoricalData("FB", "facebook")
 			Expect(data).NotTo(BeEmpty())
 			Expect(err).NotTo(HaveOccurred())
+			time.Sleep(1 * time.Second)
 		})
 	})
 
-	Describe("#GetPSRHistoricalData", func() {
+	Describe("#FetchPSRHistoricalData", func() {
 		It("expects no error", func() {
-			_, err := client.GetPSRHistoricalData("FB", "facebook")
+			data, err := scraper.FetchPSRHistoricalData("FB", "facebook")
+			Expect(data).NotTo(BeEmpty())
 			Expect(err).NotTo(HaveOccurred())
+			time.Sleep(1 * time.Second)
 		})
 	})
 
-	Describe("#GetPBRHistoricalData", func() {
+	Describe("#FetchPBRHistoricalData", func() {
 		It("expects no error", func() {
-			_, err := client.GetPBRHistoricalData("FB", "facebook")
+			data, err := scraper.FetchPBRHistoricalData("FB", "facebook")
+			Expect(data).NotTo(BeEmpty())
 			Expect(err).NotTo(HaveOccurred())
+			time.Sleep(1 * time.Second)
 		})
 	})
 
-	Describe("#GetPriceFCFRatioHistoricalData", func() {
+	Describe("#FetchPriceFCFRatioHistoricalData", func() {
 		It("expects no error", func() {
-			_, err := client.GetPFCFRHistoricalData("FB", "facebook")
+			data, err := scraper.FetchPFCFRHistoricalData("FB", "facebook")
+			Expect(data).NotTo(BeEmpty())
 			Expect(err).NotTo(HaveOccurred())
+			time.Sleep(1 * time.Second)
 		})
 	})
 })
